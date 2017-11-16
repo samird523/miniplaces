@@ -6,7 +6,7 @@ import scipy.misc
 def createH5(params):
 
 	# create output h5 file
-	output_h5 = '%s_%d_%s.h5' %(params['name'], params['img_resize'], params['split'])
+	output_h5 = '../data/%s_%d_%s.h5' %(params['name'], params['img_resize'], params['split'])
 	f_h5 = h5py.File(output_h5, "w")
 
 	# read data info from lists
@@ -47,7 +47,7 @@ if __name__=='__main__':
 		'name': 'miniplaces',
 		'split': 'train',
 		'img_resize': 256,
-		'data_root': '../../data/images/',	# MODIFY PATH ACCORDINGLY
+		'data_root': '../data/images/',	# MODIFY PATH ACCORDINGLY
     		'data_list': '../../data/train.txt'
 	}
 
@@ -55,7 +55,7 @@ if __name__=='__main__':
 		'name': 'miniplaces',
 		'split': 'val',
 		'img_resize': 256,
-		'data_root': '../../data/images/',	# MODIFY PATH ACCORDINGLY
+		'data_root': '../data/images/',	# MODIFY PATH ACCORDINGLY
     		'data_list': '../../data/val.txt'
 	}
 
