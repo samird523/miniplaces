@@ -2,6 +2,7 @@ import os, datetime
 import numpy as np
 import tensorflow as tf
 from tensorflow.contrib.layers.python.layers import batch_norm
+import tflearn
 from DataLoader import *
 
 # Dataset Parameters
@@ -93,7 +94,7 @@ def alexnet(x, keep_dropout, train_phase):
 
 # Construct dataloader
 opt_data_train = {
-    'data_h5': '../data/miniplaces_256_train.h5',
+#    'data_h5': '../../../data/miniplaces_256_train.h5',
     'data_root': '../data/images/',   # MODIFY PATH ACCORDINGLY
     'data_list': '../../data/train.txt', # MODIFY PATH ACCORDINGLY
     'load_size': load_size,
@@ -102,7 +103,7 @@ opt_data_train = {
     'randomize': True
     }
 opt_data_val = {
-    'data_h5': '../data/miniplaces_256_val.h5',
+#   'data_h5': '../data/miniplaces_256_val.h5',
     'data_root': '../data/images/',   # MODIFY PATH ACCORDINGLY
     'data_list': '../../data/val.txt',   # MODIFY PATH ACCORDINGLY
     'load_size': load_size,
@@ -111,10 +112,10 @@ opt_data_val = {
     'randomize': False
     }
 
-#loader_train = DataLoaderDisk(**opt_data_train)
-#loader_val = DataLoaderDisk(**opt_data_val)
-loader_train = DataLoaderH5(**opt_data_train)
-loader_val = DataLoaderH5(**opt_data_val)
+loader_train = DataLoaderDisk(**opt_data_train)
+loader_val = DataLoaderDisk(**opt_data_val)
+#loader_train = DataLoaderH5(**opt_data_train)
+#loader_val = DataLoaderH5(**opt_data_val)
 
 # tf Graph input
 x = tf.placeholder(tf.float32, [None, fine_size, fine_size, c])
@@ -122,6 +123,8 @@ y = tf.placeholder(tf.int64, None)
 keep_dropout = tf.placeholder(tf.float32)
 train_phase = tf.placeholder(tf.bool)
 
+#aug = tflearn.data_augmentation.ImageAugmentation
+#x = tf.map_fn(lambda img: aug.add_random_flip_leftright(img), x)
 # Construct model
 logits = alexnet(x, keep_dropout, train_phase)
 
@@ -205,3 +208,21 @@ with tf.Session() as sess:
     acc1_total /= num_batch
     acc5_total /= num_batch
     print('Evaluation Finished! Accuracy Top1 = ' + "{:.4f}".format(acc1_total) + ", Top5 = " + "{:.4f}".format(acc5_total))
+    import glob
+    files = glob.glob ('images/test/*.jpg')
+
+    with open ('temp.txt', 'w') as in_files:
+    	for eachfile in files: in_files.write(eachfile+'\n')
+
+
+    with open('submission.txt', 'w') as dest:
+	with open('temp.txt', 'r') as filename:
+    		for image in filename:
+		    	classification = sess.run(y,feed_dict={x: image})
+	    		prediction=tf.argmax(y,1)
+			prediction.eval(feed_dict={x: image}, sess=sess)
+			classifications = tf.nn.top_k(y, k=5)
+			top5strings = ''
+			for item in classifications.indices[0]:
+				top5strings+=str(item)+' '
+	        	dest.write('%s%s\n' % (image.rstrip('\n'), top5strings))
