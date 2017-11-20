@@ -4,22 +4,26 @@ import time
 import tensorflow as tf
 from tensorflow.contrib.layers.python.layers import batch_norm
 from DataLoader import *
+import resnet_model
+import scipy.misc
+
 
 # Dataset Parameters
-batch_size = 256
+batch_size = 128
 load_size = 256
 fine_size = 224
 c = 3
 data_mean = np.asarray([0.45834960097,0.44674252445,0.41352266842])
 
 # Training Parameters
-learning_rate = 0.001
+learning_rate = 0.0001
 dropout = 0.5 # Dropout, probability to keep units
 training_iters = 50000
 step_display = 50
-step_save = 100
-path_save = 'alexnet_bn'
+step_save = 5000
+path_save = '/home/misha/miniplaces/model/tensorflow/alexnet/alexnet'
 start_from = ''
+
 
 def batch_norm_layer(x, train_phase, scope_bn):
     return batch_norm(x, decay=0.9, center=True, scale=True,
@@ -112,6 +116,7 @@ opt_data_val = {
     'randomize': False
     }
 
+
 #loader_train = DataLoaderDisk(**opt_data_train)
 #loader_val = DataLoaderDisk(**opt_data_val)
 print('starting data loader ...')
@@ -119,20 +124,21 @@ loader_train = DataLoaderH5(**opt_data_train)
 loader_val = DataLoaderH5(**opt_data_val)
 print('finished with data loader')
 
+
 # tf Graph input
 x = tf.placeholder(tf.float32, [None, fine_size, fine_size, c])
 y = tf.placeholder(tf.int64, None)
 
-
-# data preprocessing
-x = tf.map_fn(lambda img: tf.image.random_flip_left_right(img), x)
-x = tf.map_fn(lambda img: tf.image.random_flip_up_down(img), x)
 
 keep_dropout = tf.placeholder(tf.float32)
 train_phase = tf.placeholder(tf.bool)
 
 # Construct model
 logits = alexnet(x, keep_dropout, train_phase)
+#resnet_size = 34
+#num_classes = 100
+#resnet = resnet_model.imagenet_resnet_v2(resnet_size, num_classes)
+#logits = resnet(x,True)
 
 # Define loss and optimizer
 loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits))
@@ -163,11 +169,7 @@ with tf.Session() as sess:
 
     while step < training_iters:
         # Load a batch of training data
-        print('start batch', step)
-        c = time.time()
         images_batch, labels_batch = loader_train.next_batch(batch_size)
-        cc = time.time()
-        print('time 1', cc-c)
 	#images_batch = next(datagen.flow(images_batch))
         
         if step % step_display == 0:
@@ -190,15 +192,14 @@ with tf.Session() as sess:
         
         # Run optimization op (backprop)
         sess.run(train_optimizer, feed_dict={x: images_batch, y: labels_batch, keep_dropout: dropout, train_phase: True})
-        print('time 2', time.time() - cc)
         
         step += 1
         
         # Save model
         if step % step_save == 0:
+            print("Saving model to", path_save)
             saver.save(sess, path_save, global_step=step)
             print("Model saved at Iter %d !" %(step))
-        
     print("Optimization Finished!")
 
 
@@ -220,3 +221,4 @@ with tf.Session() as sess:
     acc1_total /= num_batch
     acc5_total /= num_batch
     print('Evaluation Finished! Accuracy Top1 = ' + "{:.4f}".format(acc1_total) + ", Top5 = " + "{:.4f}".format(acc5_total))
+
