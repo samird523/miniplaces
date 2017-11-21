@@ -47,7 +47,11 @@ if __name__=='__main__':
 		'name': 'miniplaces',
 		'split': 'train',
 		'img_resize': 256,
+<<<<<<< HEAD
 		'data_root': 'images/',	# MODIFY PATH ACCORDINGLY
+=======
+		'data_root': '../data/images/',	# MODIFY PATH ACCORDINGLY
+>>>>>>> 657a38fa23b2959d9eeb1c0fdbd35026b75099ce
     		'data_list': '../../data/train.txt'
 	}
 
@@ -55,7 +59,11 @@ if __name__=='__main__':
 		'name': 'miniplaces',
 		'split': 'val',
 		'img_resize': 256,
+<<<<<<< HEAD
 		'data_root': 'images/',	# MODIFY PATH ACCORDINGLY
+=======
+		'data_root': '../data/images/',	# MODIFY PATH ACCORDINGLY
+>>>>>>> 657a38fa23b2959d9eeb1c0fdbd35026b75099ce
     		'data_list': '../../data/val.txt'
 	}
 

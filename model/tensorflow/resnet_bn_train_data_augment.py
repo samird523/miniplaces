@@ -3,10 +3,8 @@ import numpy as np
 import time
 import tensorflow as tf
 from tensorflow.contrib.layers.python.layers import batch_norm
-import tflearn
 from DataLoader import *
 import resnet_model
-import glob
 import scipy.misc
 
 
@@ -23,7 +21,7 @@ dropout = 0.5 # Dropout, probability to keep units
 training_iters = 50000
 step_display = 50
 step_save = 5000
-path_save = '/home/misha/miniplaces/model/tensorflow/alexnet/alexnet'
+path_save = '/home/misha/miniplaces/model/tensorflow/resnet_bn_data_augment/resnet_data_augment'
 start_from = ''
 
 
@@ -132,17 +130,19 @@ x = tf.placeholder(tf.float32, [None, fine_size, fine_size, c])
 y = tf.placeholder(tf.int64, None)
 
 
+# data preprocessing
+x = tf.map_fn(lambda img: tf.image.random_flip_left_right(img), x)
+x = tf.map_fn(lambda img: tf.image.random_flip_up_down(img), x)
+
 keep_dropout = tf.placeholder(tf.float32)
 train_phase = tf.placeholder(tf.bool)
 
-#aug = tflearn.data_augmentation.ImageAugmentation
-#x = tf.map_fn(lambda img: aug.add_random_flip_leftright(img), x)
 # Construct model
-logits = alexnet(x, keep_dropout, train_phase)
-#resnet_size = 34
-#num_classes = 100
-#resnet = resnet_model.imagenet_resnet_v2(resnet_size, num_classes)
-#logits = resnet(x,True)
+#logits = alexnet(x, keep_dropout, train_phase)
+resnet_size = 34
+num_classes = 100
+resnet = resnet_model.imagenet_resnet_v2(resnet_size, num_classes)
+logits = resnet(x,True)
 
 # Define loss and optimizer
 loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits))
@@ -174,6 +174,7 @@ with tf.Session() as sess:
     while step < training_iters:
         # Load a batch of training data
         images_batch, labels_batch = loader_train.next_batch(batch_size)
+        #print('iteration step', step)
 	#images_batch = next(datagen.flow(images_batch))
         
         if step % step_display == 0:
@@ -225,20 +226,4 @@ with tf.Session() as sess:
     acc1_total /= num_batch
     acc5_total /= num_batch
     print('Evaluation Finished! Accuracy Top1 = ' + "{:.4f}".format(acc1_total) + ", Top5 = " + "{:.4f}".format(acc5_total))
-    files = glob.glob ('images/test/*.jpg')
 
-    with open ('temp.txt', 'w') as in_files:
-    	for eachfile in files: in_files.write(eachfile+'\n')
-
-
-    with open('submission.txt', 'w') as dest:
-	with open('temp.txt', 'r') as filename:
-    		for image in filename:
-		    	classification = sess.run(y,feed_dict={x: image})
-	    		prediction=tf.argmax(y,1)
-			prediction.eval(feed_dict={x: image}, sess=sess)
-			classifications = tf.nn.top_k(y, k=5)
-			top5strings = ''
-			for item in classifications.indices[0]:
-				top5strings+=str(item)+' '
-	        	dest.write('%s%s\n' % (image.rstrip('\n'), top5strings))

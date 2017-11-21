@@ -13,7 +13,9 @@ class DataLoaderH5(object):
         self.randomize = kwargs['randomize']
 
         # read data info from lists
+        print('read data from h5 .. ')
         f = h5py.File(kwargs['data_h5'], "r")
+        print('finished reading')
         self.im_set = np.array(f['images'])
         self.lab_set = np.array(f['labels'])
 
@@ -64,7 +66,7 @@ class DataLoaderH5(object):
         perm = np.random.permutation(self.num)
         self.im_set = self.im_set[perm] 
         self.lab_set = self.lab_set[perm]
-
+#
 # Loading data from disk
 class DataLoaderDisk(object):
     def __init__(self, **kwargs):
