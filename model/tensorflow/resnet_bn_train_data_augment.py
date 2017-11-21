@@ -133,6 +133,8 @@ y = tf.placeholder(tf.int64, None)
 # data preprocessing
 x = tf.map_fn(lambda img: tf.image.random_flip_left_right(img), x)
 x = tf.map_fn(lambda img: tf.image.random_flip_up_down(img), x)
+x = tf.map_fn(lambda img: tf.image.random_hue(img, 0.5), x)
+x = tf.map_fn(lambda img: tf.image.random_contrast(img, lower=0.2, upper=1.8), x)
 
 keep_dropout = tf.placeholder(tf.float32)
 train_phase = tf.placeholder(tf.bool)
