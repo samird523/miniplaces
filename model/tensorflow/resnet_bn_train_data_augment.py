@@ -24,6 +24,13 @@ step_save = 5000
 path_save = '/home/misha/miniplaces/model/tensorflow/resnet_bn_data_augment/resnet_data_augment'
 start_from = ''
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--wd', type=float)
+args = parser.parse_args()
+weight_decay_coeff = args.wd
+
+
 
 def batch_norm_layer(x, train_phase, scope_bn):
     return batch_norm(x, decay=0.9, center=True, scale=True,
@@ -117,11 +124,11 @@ opt_data_val = {
     }
 
 
-#loader_train = DataLoaderDisk(**opt_data_train)
-#loader_val = DataLoaderDisk(**opt_data_val)
+loader_train = DataLoaderDisk(**opt_data_train)
+loader_val = DataLoaderDisk(**opt_data_val)
 print('starting data loader ...')
-loader_train = DataLoaderH5(**opt_data_train)
-loader_val = DataLoaderH5(**opt_data_val)
+#loader_train = DataLoaderH5(**opt_data_train)
+#loader_val = DataLoaderH5(**opt_data_val)
 print('finished with data loader')
 
 
@@ -135,19 +142,27 @@ x = tf.map_fn(lambda img: tf.image.random_flip_left_right(img), x)
 x = tf.map_fn(lambda img: tf.image.random_flip_up_down(img), x)
 x = tf.map_fn(lambda img: tf.image.random_hue(img, 0.5), x)
 x = tf.map_fn(lambda img: tf.image.random_contrast(img, lower=0.2, upper=1.8), x)
+#x = tf.map_fn(lambda img: tf.random_crop(img, [116,116,3]), x)
 
 keep_dropout = tf.placeholder(tf.float32)
 train_phase = tf.placeholder(tf.bool)
 
 # Construct model
 #logits = alexnet(x, keep_dropout, train_phase)
-resnet_size = 34
+resnet_size = 50
 num_classes = 100
+prev_vars = set(tf.global_variables())
 resnet = resnet_model.imagenet_resnet_v2(resnet_size, num_classes)
 logits = resnet(x,True)
+weights = set(tf.global_variables()) - prev_vars
+weight_decay_loss = tf.reduce_sum([tf.nn.l2_loss(i) for i in weights])
+
 
 # Define loss and optimizer
-loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits))
+xent_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits))
+
+loss = weight_decay_coeff * weight_decay_loss + xent_loss
+
 train_optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
 # Evaluate model
