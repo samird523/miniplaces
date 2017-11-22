@@ -9,7 +9,7 @@ import scipy.misc
 
 
 # Dataset Parameters
-batch_size = 128
+batch_size = 50
 load_size = 256
 fine_size = 224
 c = 3
@@ -20,17 +20,19 @@ learning_rate = 0.0001
 dropout = 0.5 # Dropout, probability to keep units
 training_iters = 50000
 step_display = 50
-step_save = 5000
-path_save = '/home/misha/miniplaces/model/tensorflow/resnet_bn_data_augment/resnet_data_augment'
+step_save = 100000
 start_from = ''
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('--wd', type=float)
+parser.add_argument('--n', type=float)
 args = parser.parse_args()
-weight_decay_coeff = args.wd
+
+m = {0: 0.001, 1: 0.0001, 2:0.00001, 3:0.000001, 4:0.0000001, 5:0.00000001}
+weight_decay_coeff = m[args.n]
 
 
+path_save = '/home/ubuntu/miniplaces/model/tensorflow/r' + str(int(args.n)) + '/resnet'
 
 def batch_norm_layer(x, train_phase, scope_bn):
     return batch_norm(x, decay=0.9, center=True, scale=True,
@@ -160,9 +162,7 @@ weight_decay_loss = tf.reduce_sum([tf.nn.l2_loss(i) for i in weights])
 
 # Define loss and optimizer
 xent_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits))
-
 loss = weight_decay_coeff * weight_decay_loss + xent_loss
-
 train_optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
 # Evaluate model
